@@ -341,7 +341,7 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
               <div style={{ display: 'flex', gap: 9, marginTop: 9, alignItems: 'stretch' }}>
                 <button type="button" onClick={() => set((cc) => { cc.left = cc.runLeftSpeed; cc.right = cc.runRightSpeed; cc.runRemaining = cc.runTenths / 10; })}
                   style={{ ...btn, flex: 1, border: '2px solid #2f5a43', background: C.phosphor, color: '#05130b', font: '800 11px/1.2 Archivo', padding: '9px 10px', boxShadow: '0 2px 0 #2f5a43' }}>
-                  EXECUTE<br /><span style={{ font: '600 9px/1.25 Archivo' }}>{Math.round(((c.runLeftSpeed + c.runRightSpeed) / 2) * (c.runTenths / 10))}</span>
+                  EXECUTE
                 </button>
                 <div style={{ width: 88, flex: 'none', ...well, padding: '6px 9px' }}>
                   <div style={label}>T-MINUS</div>
