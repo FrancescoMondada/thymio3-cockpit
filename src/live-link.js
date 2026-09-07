@@ -83,8 +83,11 @@ export class LiveLink {
     // the same signal, which reads as oscillation. The main stream is the
     // one documented (README) as carrying ground-reflected data; leave it
     // as the single source.
-    t.angle = d.angleDegrees;
-    t.heading = (d.angleDegrees + 360) % 360;
+    // Firmware reports angleDegrees increasing clockwise; the cockpit uses
+    // the opposite (CCW-positive) convention, so negate it here — the one
+    // place both the ANGLE readout and the heading/compass derive from.
+    t.angle = -d.angleDegrees;
+    t.heading = ((-d.angleDegrees % 360) + 360) % 360;
     t.motor = { left: d.motor.leftSpeed, right: d.motor.rightSpeed };
     t.battery = d.batteryVoltage / 1000;
     if (d.eventFlags.tapDetected) t.events.tap = Date.now();
