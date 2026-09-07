@@ -9,23 +9,26 @@ LEDs on the consoles.
 It runs with **no robot attached** — a simulated Thymio drives around a room with obstacles,
 black lines and colour pads — and switches to live telemetry the moment a real robot connects.
 
+**Live demo:** https://francescomondada.github.io/thymio3-cockpit/ (simulation works everywhere;
+connecting a real robot needs Web Bluetooth — see below).
+
 ## The API is not vendored here
 
 This project depends on [`Mobsya/thymio3-ts-api`](https://github.com/Mobsya/thymio3-ts-api)
-as a **git submodule** in `lib/thymio3-ts-api`, and Vite aliases its TypeScript entry point
-directly:
+as a **git dependency** in `package.json` (`github:Mobsya/thymio3-ts-api#main`), fetched by npm
+into `node_modules/thymio3-ts-api`. Vite aliases its TypeScript entry point directly:
 
 ```js
 // vite.config.js
-resolve: { alias: { 'thymio-api': resolve(here, 'lib/thymio3-ts-api/src/thymio.ts') } }
+resolve: { alias: { 'thymio-api': resolve(here, 'node_modules/thymio3-ts-api/src/thymio.ts') } }
 ```
 
 No API source is copied into this repository, so **every build compiles the current upstream
 code**. To take upstream changes:
 
 ```bash
-npm run api:update   # git submodule update --remote --merge
-npm run build        # next compilation picks them up
+npm run api:update    # npm update thymio3-ts-api
+npm run build          # next compilation picks them up
 ```
 
 `src/api.js` is the single import site. Swap that one line if you would rather consume a
@@ -35,14 +38,13 @@ published package (`import * as api from 'thymio3-ts-api'`) or the prebuilt IIFE
 ## Run it
 
 ```bash
-git clone --recurse-submodules <this-repo>
+git clone <this-repo>
 cd thymio3-cockpit
 npm install
 npm run dev
 ```
 
-Then open the printed `http://localhost:5173`. Already cloned without submodules?
-`npm run api:init`.
+Then open the printed `http://localhost:5173`.
 
 **Connecting to a real robot** needs Web Bluetooth: Chrome or Edge, over `https://` or
 `localhost`, and a user click on CONNECT ROBOT. Firefox and Safari do not implement Web
@@ -81,8 +83,8 @@ inside the API's ±1000.
 
 ## Deploy
 
-`.github/workflows/deploy.yml` builds with submodules and publishes to GitHub Pages on push
-to `main`. Enable Pages → "GitHub Actions" in the repository settings.
+`.github/workflows/deploy.yml` runs `npm install && npm run build` and publishes to GitHub
+Pages on push to `main`. Enable Pages → "GitHub Actions" in the repository settings.
 
 ## License
 
