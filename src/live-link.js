@@ -9,6 +9,7 @@ export class LiveLink {
     this.onChange = onChange;
     this.connected = false;
     this.sending = false;
+    this.lastSent = 0;
     this.tel = {
       prox: { left: 0, frontLeft: 0, center: 0, frontRight: 0, right: 0, backLeft: 0, backRight: 0 },
       ground: { left: 0, right: 0, ambientLeft: 0, ambientRight: 0 },
@@ -98,8 +99,11 @@ export class LiveLink {
   // interval. Gating on "still sending" (instead of a fixed timestamp) means
   // a slow link never backs up a queue of stale commands — we always send
   // the freshest cmd.current as soon as the previous write actually lands.
+  // A floor of ~50ms between sends caps it at 20Hz: fast enough to feel
+  // responsive, but leaves the BLE link headroom for other GATT operations
+  // (audio record/play) instead of saturating it with back-to-back writes.
   async send({ motorLeft, motorRight, leds, sound = 0 }) {
-    if (!this.connected || this.sending) return;
+    if (!this.connected || this.sending || Date.now() - this.lastSent < 50) return;
     this.sending = true;
     try {
       await thymio.setActuatorState({
@@ -117,6 +121,7 @@ export class LiveLink {
     } catch (err) {
       console.warn('actuator write failed', err);
     } finally {
+      this.lastSent = Date.now();
       this.sending = false;
     }
   }
