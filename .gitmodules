@@ -1,0 +1,4 @@
+[submodule "lib/thymio3-ts-api"]
+	path = lib/thymio3-ts-api
+	url = https://github.com/Mobsya/thymio3-ts-api.git
+	branch = main

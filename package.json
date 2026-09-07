@@ -1,0 +1,24 @@
+{
+  "name": "thymio3-cockpit",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Inside-the-robot cockpit dashboard for the Thymio 3, built on thymio3-ts-api",
+  "scripts": {
+    "api:init": "git submodule update --init --recursive",
+    "api:update": "git submodule update --remote --merge lib/thymio3-ts-api",
+    "predev": "npm run api:init",
+    "dev": "vite",
+    "prebuild": "npm run api:init",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.0",
+    "vite": "^8.2.2"
+  }
+}

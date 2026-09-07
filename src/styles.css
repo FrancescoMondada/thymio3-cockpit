@@ -1,0 +1,14 @@
+:root { color-scheme: dark; }
+* { box-sizing: border-box; font-variant-numeric: tabular-nums; }
+body {
+  margin: 0;
+  background: #050706;
+  color: #d9f2e3;
+  font-family: 'Archivo', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: #7dfaa8; text-decoration: none; }
+a:hover { color: #b9ffd4; }
+input[type=range] { accent-color: #7dfaa8; height: 18px; }
+button { font-family: inherit; }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid #ff563c; outline-offset: 2px; }
