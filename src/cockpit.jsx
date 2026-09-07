@@ -28,7 +28,7 @@ function Meter({ name, v }) {
   );
 }
 
-export default function Cockpit({ telemetry: t, command: c, connection, live, sweep, onConnect, onDisconnect, onCommand }) {
+export default function Cockpit({ telemetry: t, command: c, connection, live, sweep, onConnect, onDisconnect, onZeroGyro, onCommand }) {
   const [kid, setKid] = useState(true);
   const [view, setView] = useState('COMBO');
   const [drawer, setDrawer] = useState(true);
@@ -45,7 +45,7 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
     const fw = -y * SPEED_LIMIT, turn = x * SPEED_LIMIT;
     if (cc.mix === 'TANDEM') { cc.left = fw; cc.right = fw; }
     else if (cc.mix === 'SPIN') { cc.left = turn; cc.right = -turn; }
-    else { cc.left = fw - turn * 0.85; cc.right = fw + turn * 0.85; }
+    else { cc.left = fw + turn * 0.85; cc.right = fw - turn * 0.85; }
     cc.left = Math.round(cc.left); cc.right = Math.round(cc.right);
   });
   const padPoint = (e) => {
@@ -240,7 +240,10 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
                 </div>
               </div>
               <div style={{ flex: 1 }}>
-                <h2 style={{ margin: 0, font: '800 11px/1.2 Archivo', letterSpacing: '.1em', color: C.phosphor }}>{copy.gyroTitle}</h2>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+                  <h2 style={{ margin: 0, font: '800 11px/1.2 Archivo', letterSpacing: '.1em', color: C.phosphor }}>{copy.gyroTitle}</h2>
+                  <button type="button" onClick={onZeroGyro} style={{ ...btn, padding: '5px 8px', font: '700 9px/1 Archivo' }}>ZERO</button>
+                </div>
                 <div style={{ display: 'flex', gap: 14, marginTop: 10 }}>
                   <div><div style={label}>ANGLE</div><div style={{ marginTop: 3, ...value, color: C.phosphor }}>{t.angle.toFixed(0)}°</div></div>
                   <div><div style={label}>RATE</div><div style={{ marginTop: 3, ...value }}>{t.rate.toFixed(0)}°/s</div></div>
@@ -338,7 +341,7 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
               <div style={{ display: 'flex', gap: 9, marginTop: 9, alignItems: 'stretch' }}>
                 <button type="button" onClick={() => set((cc) => { cc.left = cc.runLeftSpeed; cc.right = cc.runRightSpeed; cc.runRemaining = cc.runTenths / 10; })}
                   style={{ ...btn, flex: 1, border: '2px solid #2f5a43', background: C.phosphor, color: '#05130b', font: '800 11px/1.2 Archivo', padding: '9px 10px', boxShadow: '0 2px 0 #2f5a43' }}>
-                  EXECUTE<br /><span style={{ font: '600 9px/1.25 Archivo' }}>{Math.round(((c.runLeftSpeed + c.runRightSpeed) / 2) * (c.runTenths / 10))} {copy.distUnit}</span>
+                  EXECUTE<br /><span style={{ font: '600 9px/1.25 Archivo' }}>{Math.round(((c.runLeftSpeed + c.runRightSpeed) / 2) * (c.runTenths / 10))}</span>
                 </button>
                 <div style={{ width: 88, flex: 'none', ...well, padding: '6px 9px' }}>
                   <div style={label}>T-MINUS</div>
@@ -415,7 +418,9 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
               <div style={{ marginTop: 10, font: '500 10px/1.45 Archivo', color: C.phosphorDim, textAlign: 'center' }}>{copy.padHint}</div>
               <div style={{ marginTop: 8, display: 'flex', gap: 6, justifyContent: 'center' }}>
                 {['forward', 'back', 'left', 'right', 'center'].map((k) => (
-                  <span key={k} title={`robot button: ${k}`} style={{ width: 10, height: 10, background: t.buttons[k] ? C.phosphor : C.rule }} />
+                  <button key={k} type="button" title={`robot button: ${k}`}
+                    {...(k === 'center' ? { onPointerDown: () => motors(0, 0) } : hold(k))}
+                    style={{ width: 10, height: 10, padding: 0, border: 'none', cursor: 'pointer', background: (t.buttons[k] || c.buttons[k]) ? C.phosphor : C.rule }} />
                 ))}
               </div>
             </section>

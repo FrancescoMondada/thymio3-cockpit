@@ -22,6 +22,9 @@ export default function App() {
   const [conn, setConn] = useState({ status: 'disconnected', device: '', firmware: null, error: '', reconnect: false });
   const [live, setLive] = useState(false);
   const sweep = useRef(0);
+  // The firmware doesn't expose a "reset" for the integrated gyro angle, so
+  // zeroing is a local display offset applied to the raw telemetry below.
+  const [gyroZero, setGyroZero] = useState({ angle: 0, heading: 0 });
 
   // --- connection ---------------------------------------------------------
   useEffect(() => {
@@ -85,8 +88,8 @@ export default function App() {
       if (k.arrowleft || k.a || b.left) turn -= 1;
       if (k.arrowright || k.d || b.right) turn += 1;
       if (fw || turn) {
-        c.left = clamp(250 * fw - 170 * turn);
-        c.right = clamp(250 * fw + 170 * turn);
+        c.left = clamp(250 * fw + 170 * turn);
+        c.right = clamp(250 * fw - 170 * turn);
         c.manual = true;
       } else if (c.manual) {
         c.manual = false;
@@ -111,17 +114,26 @@ export default function App() {
     return () => clearInterval(id);
   }, [live]);
 
-  const telemetry = live ? link.current?.tel : sim.current.tel;
+  const rawTel = (live ? link.current?.tel : sim.current.tel) || sim.current.tel;
+  const telemetry = {
+    ...rawTel,
+    angle: rawTel.angle - gyroZero.angle,
+    heading: ((rawTel.heading - gyroZero.heading) % 360 + 360) % 360,
+  };
+  const zeroGyro = useCallback(() => {
+    setGyroZero({ angle: rawTel.angle, heading: rawTel.heading });
+  }, [rawTel]);
 
   return (
     <Cockpit
-      telemetry={telemetry || sim.current.tel}
+      telemetry={telemetry}
       command={cmd.current}
       connection={conn}
       live={live}
       sweep={sweep.current}
       onConnect={connect}
       onDisconnect={disconnect}
+      onZeroGyro={zeroGyro}
       onCommand={(mutate) => { mutate(cmd.current); tick((n) => n + 1); }}
     />
   );
