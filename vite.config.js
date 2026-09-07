@@ -5,16 +5,16 @@ import { fileURLToPath } from 'url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-// The Thymio 3 API is NOT vendored into this repo. It is a git submodule
-// (lib/thymio3-ts-api) and we alias its TypeScript entry point directly, so
-// every build compiles the current upstream source. To take upstream changes:
-//   npm run api:update && npm run build
+// The Thymio 3 API is NOT vendored here. package.json depends on
+// github:Mobsya/thymio3-ts-api#main and we alias its TypeScript entry point,
+// so every build compiles current upstream source.
+// Take upstream changes with:  npm run api:update && npm run build
 export default defineConfig({
   base: './',
   plugins: [react()],
   resolve: {
     alias: {
-      'thymio-api': resolve(here, 'lib/thymio3-ts-api/src/thymio.ts'),
+      'thymio-api': resolve(here, 'node_modules/thymio3-ts-api/src/thymio.ts'),
     },
   },
 });
