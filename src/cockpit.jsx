@@ -34,7 +34,7 @@ function Meter({ name, v }) {
 export default function Cockpit({ telemetry: t, command: c, connection, live, sweep, onConnect, onDisconnect, onZeroGyro, onCommand }) {
   const [kid, setKid] = useState(true);
   const [view, setView] = useState('COMBO');
-  const [drawer, setDrawer] = useState(true);
+  const [drawer, setDrawer] = useState(false);
   const [ear, setEar] = useState({ status: 'idle', error: '', remaining: 0 });
   const canvas = useRef(null);
   const pad = useRef(null);

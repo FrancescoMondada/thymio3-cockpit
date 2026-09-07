@@ -12,7 +12,7 @@ export default function App() {
   const link = useRef(null);
   const cmd = useRef({
     left: 0, right: 0, leds: [0, 1, 2, 3].map(() => ({ r: 0, g: 0, b: 0 })),
-    mix: 'TANDEM', yoke: { x: 0, y: 0 },
+    mix: 'FREE', yoke: { x: 0, y: 0 },
     runLeftSpeed: 200, runRightSpeed: 200, runTenths: 30, runRemaining: 0,
     stopwatch: { running: false, ms: 0 },
     keys: {}, buttons: {}, manual: false,
