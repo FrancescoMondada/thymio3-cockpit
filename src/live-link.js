@@ -59,7 +59,7 @@ export class LiveLink {
     t.color = { h, s: Math.round((s / 255) * 100), v: Math.round((v / 255) * 100), css: `hsl(${h} ${(s / 255) * 100}% ${(v / 255) * 50}%)`, name: 'COLOR SENSOR' };
     // Inclination from the raw accelerometer (approximate, in degrees).
     const { x, y, z } = d.accelerationRaw;
-    t.roll = (Math.atan2(y, z) * 180) / Math.PI;
+    t.roll = -(Math.atan2(y, z) * 180) / Math.PI;
     t.pitch = (Math.atan2(-x, Math.hypot(y, z)) * 180) / Math.PI;
     t.rate = d.gyroRaw.z / 16;
     const hist = t.micHistory.slice(1);
