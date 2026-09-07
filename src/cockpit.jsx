@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { drawViewport } from './viewport.js';
 import { C, COPY, HUES, SWATCHES, SPEEDS, PRESETS, SPEED_LIMIT, ledCss, tone } from './theme.js';
+import { thymio } from './api.js';
+
+const RECORD_SECONDS = 10;
 
 const label = { font: '500 9px/1 Archivo', letterSpacing: '.14em', color: C.phosphorDim };
 const value = { font: '800 16px/1 Archivo', color: C.ink };
@@ -32,11 +35,38 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
   const [kid, setKid] = useState(true);
   const [view, setView] = useState('COMBO');
   const [drawer, setDrawer] = useState(true);
+  const [ear, setEar] = useState({ status: 'idle', error: '', remaining: 0 });
   const canvas = useRef(null);
   const pad = useRef(null);
   const copy = kid ? COPY.kid : COPY.expert;
 
   useEffect(() => { if (canvas.current) drawViewport(canvas.current, t, { mode: view, sweep }); });
+
+  // Recording and playback both happen on the robot itself (its mic, its
+  // speaker) — the API only tells us the write succeeded, not when the
+  // firmware is actually done, so "recording" is tracked with a local
+  // countdown that matches the fixed duration we asked for.
+  useEffect(() => {
+    if (ear.status !== 'recording') return;
+    if (ear.remaining <= 0) { setEar((s) => (s.status === 'recording' ? { status: 'idle', error: '', remaining: 0 } : s)); return; }
+    const id = setTimeout(() => setEar((s) => ({ ...s, remaining: s.remaining - 1 })), 1000);
+    return () => clearTimeout(id);
+  }, [ear.status, ear.remaining]);
+
+  const startRecording = async () => {
+    setEar({ status: 'recording', error: '', remaining: RECORD_SECONDS });
+    try { await thymio.recordAudio(RECORD_SECONDS); }
+    catch (err) { setEar({ status: 'idle', error: err?.message || 'record failed', remaining: 0 }); }
+  };
+  const playRecording = async () => {
+    setEar({ status: 'playing', error: '', remaining: 0 });
+    try { await thymio.playAudioFile(); setEar({ status: 'idle', error: '', remaining: 0 }); }
+    catch (err) { setEar({ status: 'idle', error: err?.message || 'play failed', remaining: 0 }); }
+  };
+  const stopEar = async () => {
+    try { await thymio.stopAudioFile(); } catch { /* ignore */ }
+    setEar({ status: 'idle', error: '', remaining: 0 });
+  };
 
   const set = (mutate) => onCommand(mutate);
   const motors = (l, r) => set((cc) => { cc.left = Math.max(-SPEED_LIMIT, Math.min(SPEED_LIMIT, Math.round(l))); cc.right = Math.max(-SPEED_LIMIT, Math.min(SPEED_LIMIT, Math.round(r))); });
@@ -406,23 +436,16 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
               <h3 style={{ margin: 0, font: '700 11px/1 Archivo', letterSpacing: '.1em', color: C.ink }}>{copy.padTitle}</h3>
               <div style={{ marginTop: 11, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gridTemplateRows: 'repeat(3,40px)', gap: 6, width: 196, marginLeft: 'auto', marginRight: 'auto' }}>
                 <div />
-                <button type="button" {...hold('forward')} style={{ ...btn, background: c.buttons.forward ? 'rgba(125,250,168,.22)' : C.panelUp, textAlign: 'center', font: '700 11px/1 Archivo' }}>FWD</button>
+                <button type="button" {...hold('forward')} style={{ ...btn, background: (c.buttons.forward || t.buttons.forward) ? 'rgba(125,250,168,.22)' : C.panelUp, textAlign: 'center', font: '700 11px/1 Archivo' }}>FWD</button>
                 <div />
-                <button type="button" {...hold('left')} style={{ ...btn, background: c.buttons.left ? 'rgba(125,250,168,.22)' : C.panelUp, textAlign: 'center', font: '700 11px/1 Archivo' }}>L</button>
-                <button type="button" onPointerDown={() => motors(0, 0)} style={{ ...btn, textAlign: 'center', font: '700 10px/1 Archivo' }}>OK</button>
-                <button type="button" {...hold('right')} style={{ ...btn, background: c.buttons.right ? 'rgba(125,250,168,.22)' : C.panelUp, textAlign: 'center', font: '700 11px/1 Archivo' }}>R</button>
+                <button type="button" {...hold('left')} style={{ ...btn, background: (c.buttons.left || t.buttons.left) ? 'rgba(125,250,168,.22)' : C.panelUp, textAlign: 'center', font: '700 11px/1 Archivo' }}>L</button>
+                <button type="button" onPointerDown={() => motors(0, 0)} style={{ ...btn, background: t.buttons.center ? 'rgba(125,250,168,.22)' : C.panelUp, textAlign: 'center', font: '700 10px/1 Archivo' }}>OK</button>
+                <button type="button" {...hold('right')} style={{ ...btn, background: (c.buttons.right || t.buttons.right) ? 'rgba(125,250,168,.22)' : C.panelUp, textAlign: 'center', font: '700 11px/1 Archivo' }}>R</button>
                 <div />
-                <button type="button" {...hold('back')} style={{ ...btn, background: c.buttons.back ? 'rgba(125,250,168,.22)' : C.panelUp, textAlign: 'center', font: '700 11px/1 Archivo' }}>REV</button>
+                <button type="button" {...hold('back')} style={{ ...btn, background: (c.buttons.back || t.buttons.back) ? 'rgba(125,250,168,.22)' : C.panelUp, textAlign: 'center', font: '700 11px/1 Archivo' }}>REV</button>
                 <div />
               </div>
               <div style={{ marginTop: 10, font: '500 10px/1.45 Archivo', color: C.phosphorDim, textAlign: 'center' }}>{copy.padHint}</div>
-              <div style={{ marginTop: 8, display: 'flex', gap: 6, justifyContent: 'center' }}>
-                {['forward', 'back', 'left', 'right', 'center'].map((k) => (
-                  <button key={k} type="button" title={`robot button: ${k}`}
-                    {...(k === 'center' ? { onPointerDown: () => motors(0, 0) } : hold(k))}
-                    style={{ width: 10, height: 10, padding: 0, border: 'none', cursor: 'pointer', background: (t.buttons[k] || c.buttons[k]) ? C.phosphor : C.rule }} />
-                ))}
-              </div>
             </section>
 
             <section style={{ padding: '13px 15px 14px', borderBottom: `2px solid ${C.rule}` }}>
@@ -434,6 +457,24 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
               </div>
               <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', font: '500 9px/1 Archivo', color: C.phosphorDim }}>
                 <span>LEVEL {t.micVolume}</span><span>{live ? 'ROBOT MIC' : 'SIMULATED'}</span>
+              </div>
+              <div style={{ marginTop: 10, display: 'flex', gap: 6 }}>
+                <button type="button" disabled={!live || ear.status !== 'idle'} onClick={startRecording}
+                  style={{ ...btn, flex: 1, padding: '7px 8px', font: '700 10px/1 Archivo', opacity: !live || ear.status !== 'idle' ? 0.4 : 1,
+                    border: `2px solid ${ear.status === 'recording' ? C.red : C.rule}`, color: ear.status === 'recording' ? C.red : C.ink }}>
+                  {ear.status === 'recording' ? `REC ${ear.remaining}s` : 'RECORD'}
+                </button>
+                <button type="button" disabled={!live || ear.status !== 'idle'} onClick={playRecording}
+                  style={{ ...btn, flex: 1, padding: '7px 8px', font: '700 10px/1 Archivo', opacity: !live || ear.status !== 'idle' ? 0.4 : 1 }}>
+                  {ear.status === 'playing' ? 'PLAYING…' : 'PLAY'}
+                </button>
+                <button type="button" disabled={!live || ear.status === 'idle'} onClick={stopEar}
+                  style={{ ...btn, padding: '7px 10px', font: '700 10px/1 Archivo', opacity: !live || ear.status === 'idle' ? 0.4 : 1 }}>
+                  STOP
+                </button>
+              </div>
+              <div style={{ marginTop: 6, font: '500 9px/1.4 Archivo', color: ear.error ? C.red : C.phosphorDim }}>
+                {ear.error || (live ? `Records up to ${RECORD_SECONDS}s to the robot, plays back on its own speaker.` : 'Connect to a real robot to record and play back.')}
               </div>
             </section>
 
