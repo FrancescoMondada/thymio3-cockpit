@@ -76,8 +76,12 @@ export class LiveLink {
     // instead of driving the dial from the raw single sample.
     t.ground.ambientLeft = ema(t.ground.ambientLeft, d.groundAmbient.left);
     t.ground.ambientRight = ema(t.ground.ambientRight, d.groundAmbient.right);
-    t.ground.left = d.groundReflected.left;
-    t.ground.right = d.groundReflected.right;
+    // groundReflected here duplicates groundSensors from the main stream
+    // (applyMain, above) at a different cadence — writing it here made the
+    // ground-sensor readout race between two independently-timed samples of
+    // the same signal, which reads as oscillation. The main stream is the
+    // one documented (README) as carrying ground-reflected data; leave it
+    // as the single source.
     t.angle = d.angleDegrees;
     t.heading = (d.angleDegrees + 360) % 360;
     t.motor = { left: d.motor.leftSpeed, right: d.motor.rightSpeed };
