@@ -1,12 +1,14 @@
 import { thymio, EVENTS } from './api.js';
 
+const ema = (prev, next, a = 0.25) => prev + a * (next - prev);
+
 // Bridges the API's DOM events into the same telemetry shape the simulator
 // produces, and pushes actuator state back to the robot at a fixed rate.
 export class LiveLink {
   constructor(onChange) {
     this.onChange = onChange;
     this.connected = false;
-    this.lastSend = 0;
+    this.sending = false;
     this.tel = {
       prox: { left: 0, frontLeft: 0, center: 0, frontRight: 0, right: 0, backLeft: 0, backRight: 0 },
       ground: { left: 0, right: 0, ambientLeft: 0, ambientRight: 0 },
@@ -68,8 +70,12 @@ export class LiveLink {
   applyOther(d) {
     if (!d) return;
     const t = this.tel;
-    t.ground.ambientLeft = d.groundAmbient.left;
-    t.ground.ambientRight = d.groundAmbient.right;
+    // Raw ambient-light samples are noisy frame to frame (indoor lighting
+    // flicker, IR crosstalk with the ground-reflectance pulses); the round
+    // gauges scale directly off these values, so smooth them with an EMA
+    // instead of driving the dial from the raw single sample.
+    t.ground.ambientLeft = ema(t.ground.ambientLeft, d.groundAmbient.left);
+    t.ground.ambientRight = ema(t.ground.ambientRight, d.groundAmbient.right);
     t.ground.left = d.groundReflected.left;
     t.ground.right = d.groundReflected.right;
     t.angle = d.angleDegrees;
@@ -83,11 +89,14 @@ export class LiveLink {
   }
 
   // Full actuator frame — the API expects every field on every write.
+  // Each frame is two writeValueWithResponse() GATT calls, serialized by the
+  // API's own bluetooth queue; that round trip can take longer than our send
+  // interval. Gating on "still sending" (instead of a fixed timestamp) means
+  // a slow link never backs up a queue of stale commands — we always send
+  // the freshest cmd.current as soon as the previous write actually lands.
   async send({ motorLeft, motorRight, leds, sound = 0 }) {
-    if (!this.connected) return;
-    const now = Date.now();
-    if (now - this.lastSend < 100) return; // ~10 Hz
-    this.lastSend = now;
+    if (!this.connected || this.sending) return;
+    this.sending = true;
     try {
       await thymio.setActuatorState({
         circleLEDs: Array(8).fill(0),
@@ -103,6 +112,8 @@ export class LiveLink {
       });
     } catch (err) {
       console.warn('actuator write failed', err);
+    } finally {
+      this.sending = false;
     }
   }
 }
