@@ -177,7 +177,7 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
                       </div>
                       <div>
                         <div style={{ font: '600 9px/1 Archivo', letterSpacing: '.1em', color: C.phosphorDim }}>{name}</div>
-                        <div style={{ marginTop: 6, font: '800 17px/1 Archivo', color: C.amber }}>{v}</div>
+                        <div style={{ marginTop: 6, font: '800 17px/1 Archivo', color: C.amber }}>{Math.round(v)}</div>
                       </div>
                     </div>
                   );
