@@ -2,6 +2,27 @@ import { thymio, EVENTS } from './api.js';
 
 const ema = (prev, next, a = 0.25) => prev + a * (next - prev);
 
+// Proper HSV→RGB conversion, matching the thymio3-ts-api demo's calibrated
+// color preview exactly (demo/src/color-utils.js hsvToRgb). h is clamped to
+// 0-360 then wrapped, same as the demo — the raw colorSensor.h field isn't
+// documented as already being pure degrees, so we don't second-guess it.
+function hsvToRgb(h, s, v) {
+  const hue = ((Math.max(0, Math.min(360, h)) % 360) + 360) % 360;
+  const sat = Math.max(0, Math.min(1, s / 100));
+  const val = Math.max(0, Math.min(1, v / 100));
+  const c = val * sat;
+  const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
+  const m = val - c;
+  let r = 0, g = 0, b = 0;
+  if (hue < 60) { r = c; g = x; }
+  else if (hue < 120) { r = x; g = c; }
+  else if (hue < 180) { g = c; b = x; }
+  else if (hue < 240) { g = x; b = c; }
+  else if (hue < 300) { r = x; b = c; }
+  else { r = c; b = x; }
+  return { r: Math.round((r + m) * 255), g: Math.round((g + m) * 255), b: Math.round((b + m) * 255) };
+}
+
 // Bridges the API's DOM events into the same telemetry shape the simulator
 // produces, and pushes actuator state back to the robot at a fixed rate.
 export class LiveLink {
@@ -13,7 +34,7 @@ export class LiveLink {
     this.tel = {
       prox: { left: 0, frontLeft: 0, center: 0, frontRight: 0, right: 0, backLeft: 0, backRight: 0 },
       ground: { left: 0, right: 0, ambientLeft: 0, ambientRight: 0 },
-      color: { h: 0, s: 0, v: 0, css: '#000000', name: 'COLOR' },
+      color: { h: 0, s: 0, v: 0, css: '#000000', name: 'COLOR SENSOR' },
       angle: 0, rate: 0, pitch: 0, roll: 0,
       micVolume: 0, micHistory: new Array(36).fill(0),
       buttons: { forward: false, back: false, left: false, right: false, center: false },
@@ -55,8 +76,14 @@ export class LiveLink {
     t.buttons = { ...d.buttons };
     t.micVolume = d.microphoneVolume;
     t.tvRemote = d.tvRemote;
+    // colorSensor is the robot's calibrated HSV reading (h 0-360, s/v raw
+    // 0-255) — matches the "Color HSV preview" in the API's own demo. The
+    // swatch used an ad-hoc, incorrect hsl() string before; convert through
+    // proper HSV→RGB like the demo does instead.
     const { h, s, v } = d.colorSensor;
-    t.color = { h, s: Math.round((s / 255) * 100), v: Math.round((v / 255) * 100), css: `hsl(${h} ${(s / 255) * 100}% ${(v / 255) * 50}%)`, name: 'COLOR SENSOR' };
+    const sPct = Math.round((s / 255) * 100), vPct = Math.round((v / 255) * 100);
+    const rgb = hsvToRgb(h, sPct, vPct);
+    t.color = { ...t.color, h, s: sPct, v: vPct, css: `rgb(${rgb.r},${rgb.g},${rgb.b})` };
     // Inclination from the raw accelerometer (approximate, in degrees).
     const { x, y, z } = d.accelerationRaw;
     t.roll = -(Math.atan2(y, z) * 180) / Math.PI;
