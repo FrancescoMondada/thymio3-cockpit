@@ -76,14 +76,13 @@ export class LiveLink {
     t.buttons = { ...d.buttons };
     t.micVolume = d.microphoneVolume;
     t.tvRemote = d.tvRemote;
-    // colorSensor is the robot's calibrated HSV reading (h 0-360, s/v raw
-    // 0-255) — matches the "Color HSV preview" in the API's own demo. The
-    // swatch used an ad-hoc, incorrect hsl() string before; convert through
-    // proper HSV→RGB like the demo does instead.
+    // colorSensor is the robot's calibrated HSV reading. s and v arrive
+    // already scaled 0-100 (the demo clamps them straight to that range,
+    // no /255 involved) — we were incorrectly treating them as 0-255 and
+    // dividing again, which shrank both by a factor of ~2.55.
     const { h, s, v } = d.colorSensor;
-    const sPct = Math.round((s / 255) * 100), vPct = Math.round((v / 255) * 100);
-    const rgb = hsvToRgb(h, sPct, vPct);
-    t.color = { ...t.color, h, s: sPct, v: vPct, css: `rgb(${rgb.r},${rgb.g},${rgb.b})` };
+    const rgb = hsvToRgb(h, s, v);
+    t.color = { ...t.color, h, s, v, css: `rgb(${rgb.r},${rgb.g},${rgb.b})` };
     // Inclination from the raw accelerometer (approximate, in degrees).
     const { x, y, z } = d.accelerationRaw;
     t.roll = -(Math.atan2(y, z) * 180) / Math.PI;
