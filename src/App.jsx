@@ -4,6 +4,7 @@ import { RobotSim } from './robot-sim.js';
 import { LiveLink } from './live-link.js';
 import { thymio, EVENTS } from './api.js';
 import { SPEED_LIMIT } from './theme.js';
+import { DataLogger } from './logger.js';
 
 const clamp = (v) => Math.max(-SPEED_LIMIT, Math.min(SPEED_LIMIT, Math.round(v)));
 
@@ -22,6 +23,7 @@ export default function App() {
   const [conn, setConn] = useState({ status: 'disconnected', device: '', firmware: null, error: '', reconnect: false });
   const [live, setLive] = useState(false);
   const sweep = useRef(0);
+  const logger = useRef(new DataLogger());
   // The firmware doesn't expose a "reset" for the integrated gyro angle, so
   // zeroing is a local display offset applied to the raw telemetry below.
   const [gyroZero, setGyroZero] = useState({ angle: 0, heading: 0 });
@@ -108,6 +110,9 @@ export default function App() {
       } else {
         sim.current.step(0.04, { left: c.left, right: c.right });
       }
+      // Log the raw telemetry (pre gyro-zero-offset) so an export reflects
+      // exactly what the sensors reported, not a display-only adjustment.
+      logger.current.record(live ? link.current.tel : sim.current.tel, c, live);
       sweep.current = (sweep.current + 0.11) % (Math.PI * 2);
       tick((n) => n + 1);
     }, 40);
@@ -124,6 +129,13 @@ export default function App() {
     setGyroZero({ angle: rawTel.angle, heading: rawTel.heading });
   }, [rawTel]);
 
+  const toggleLog = useCallback(() => {
+    if (logger.current.enabled) logger.current.stop(); else logger.current.start();
+    tick((n) => n + 1);
+  }, []);
+  const clearLog = useCallback(() => { logger.current.clear(); tick((n) => n + 1); }, []);
+  const exportLog = useCallback(() => { logger.current.export(); }, []);
+
   return (
     <Cockpit
       telemetry={telemetry}
@@ -131,9 +143,13 @@ export default function App() {
       connection={conn}
       live={live}
       sweep={sweep.current}
+      logging={{ enabled: logger.current.enabled, rows: logger.current.rows.length, full: logger.current.full }}
       onConnect={connect}
       onDisconnect={disconnect}
       onZeroGyro={zeroGyro}
+      onToggleLog={toggleLog}
+      onClearLog={clearLog}
+      onExportLog={exportLog}
       onCommand={(mutate) => { mutate(cmd.current); tick((n) => n + 1); }}
     />
   );

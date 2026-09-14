@@ -31,7 +31,7 @@ function Meter({ name, v }) {
   );
 }
 
-export default function Cockpit({ telemetry: t, command: c, connection, live, sweep, onConnect, onDisconnect, onZeroGyro, onCommand }) {
+export default function Cockpit({ telemetry: t, command: c, connection, live, sweep, logging, onConnect, onDisconnect, onZeroGyro, onToggleLog, onClearLog, onExportLog, onCommand }) {
   const [kid, setKid] = useState(true);
   const [view, setView] = useState('COMBO');
   const [drawer, setDrawer] = useState(false);
@@ -478,7 +478,7 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
               </div>
             </section>
 
-            <section style={{ padding: '13px 15px 16px' }}>
+            <section style={{ padding: '13px 15px 14px', borderBottom: `2px solid ${C.rule}` }}>
               <h3 style={{ margin: 0, font: '700 11px/1 Archivo', letterSpacing: '.1em', color: C.ink }}>{copy.irTitle}</h3>
               <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ width: 40, height: 40, ...well, background: t.tvRemote ? 'rgba(125,250,168,.35)' : '#050806' }} />
@@ -486,6 +486,31 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
                   <div style={label}>LAST CODE</div>
                   <div style={{ marginTop: 4, font: '800 19px/1 Archivo', color: C.phosphor }}>{t.tvRemote ? `0x${t.tvRemote.toString(16).toUpperCase().padStart(2, '0')}` : '——'}</div>
                 </div>
+              </div>
+            </section>
+
+            <section style={{ padding: '13px 15px 16px' }}>
+              <H sub={copy.logHint}>{copy.logTitle}</H>
+              <div style={{ marginTop: 10, display: 'flex', gap: 6 }}>
+                <button type="button" onClick={onToggleLog} disabled={logging.full}
+                  style={{ ...btn, flex: 1, padding: '7px 8px', font: '700 10px/1 Archivo', opacity: logging.full ? 0.4 : 1,
+                    border: `2px solid ${logging.enabled ? C.red : C.rule}`, color: logging.enabled ? C.red : C.ink }}>
+                  {logging.enabled ? 'STOP' : 'RECORD'}
+                </button>
+                <button type="button" onClick={onExportLog} disabled={logging.rows === 0}
+                  style={{ ...btn, flex: 1, padding: '7px 8px', font: '700 10px/1 Archivo', opacity: logging.rows === 0 ? 0.4 : 1 }}>
+                  EXPORT CSV
+                </button>
+                <button type="button" onClick={onClearLog} disabled={logging.rows === 0 || logging.enabled}
+                  style={{ ...btn, padding: '7px 10px', font: '700 10px/1 Archivo', opacity: logging.rows === 0 || logging.enabled ? 0.4 : 1 }}>
+                  CLEAR
+                </button>
+              </div>
+              <div style={{ marginTop: 6, font: '500 9px/1.4 Archivo', color: logging.full ? C.amber : C.phosphorDim }}>
+                {logging.full ? `LOG FULL AT ${logging.rows} ROWS · export or clear to keep recording`
+                  : logging.enabled ? `RECORDING · ${logging.rows} rows`
+                  : logging.rows > 0 ? `${logging.rows} rows buffered, not recording`
+                  : 'Not recording.'}
               </div>
             </section>
           </div>

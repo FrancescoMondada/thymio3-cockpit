@@ -59,6 +59,7 @@ export const COPY = {
     audioTitle: 'MY EARS', irTitle: 'REMOTE CONTROL',
     distLabel: 'That should move me about', distUnit: 'robot units',
     yokeFwd: 'FORWARD', yokeRev: 'BACKWARD',
+    logTitle: 'MY FLIGHT RECORDER', logHint: 'Every sensor and every command, once recording is on.',
   },
   expert: {
     proxTitle: 'PROXIMITY ARRAY · FRONT', proxBackTitle: 'PROXIMITY ARRAY · AFT',
@@ -72,6 +73,7 @@ export const COPY = {
     audioTitle: 'MICROPHONE', irTitle: 'IR RECEIVER',
     distLabel: 'Estimated travel', distUnit: 'speed × s',
     yokeFwd: 'FWD', yokeRev: 'REV',
+    logTitle: 'DATA LOG', logHint: 'All sensor and actuator fields, one row per drive-loop tick, CSV export.',
   },
 };
 
