@@ -135,13 +135,20 @@ export class LiveLink {
     if (!this.connected || this.sending || Date.now() - this.lastSent < 50) return;
     this.sending = true;
     try {
+      // The protocol requires a value for every actuator field on every
+      // write, including smallBottomRGB — the small LED next to the
+      // underside color sensor. We used to hardcode it off, which meant
+      // this app was itself the thing silencing it 20x/sec, overriding
+      // any firmware default; drive it from the calibrated color reading
+      // instead so it actually reflects the sensed floor color.
+      const bottom = hsvToRgb(this.tel.color.h, this.tel.color.s, this.tel.color.v);
       await thymio.setActuatorState({
         circleLEDs: Array(8).fill(0),
         frontLegoLEDs: Array(8).fill(0),
         rearLegoLEDs: Array(8).fill(0),
         flRGB: leds[0], frRGB: leds[1], blRGB: leds[2], brRGB: leds[3],
         motorLeft, motorRight, sound,
-        smallBottomRGB: { r: 0, g: 0, b: 0 },
+        smallBottomRGB: { r: Math.round((bottom.r / 255) * 15), g: Math.round((bottom.g / 255) * 15), b: Math.round((bottom.b / 255) * 15) },
         smallBackRGB: { r: 0, g: 0, b: 0 },
         buttonLEDs: Array(4).fill(0),
         receiverLED: 0,
