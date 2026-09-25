@@ -108,7 +108,8 @@ export class RobotSim {
     }
 
     t.rate = (om * 180) / Math.PI;
-    t.angle = (t.angle + t.rate * dt + 360) % 360;
+    // Compass convention like the live robot: grows when turning right.
+    t.angle = (t.angle - t.rate * dt + 360) % 360;
     t.motor = { left: mL, right: mR };
 
     const last = this.trail[this.trail.length - 1];
@@ -148,7 +149,7 @@ export class RobotSim {
 
     this.batt = Math.max(3.3, this.batt - (2e-6 + load * 4e-8));
     t.battery = this.batt;
-    t.heading = ((this.pose.th * 180) / Math.PI + 450) % 360;
+    t.heading = ((((-this.pose.th * 180) / Math.PI - 90) % 360) + 360) % 360;
     return t;
   }
 }

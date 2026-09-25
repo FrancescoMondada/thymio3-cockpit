@@ -3,7 +3,7 @@ import Cockpit from './cockpit.jsx';
 import { RobotSim } from './robot-sim.js';
 import { LiveLink } from './live-link.js';
 import { thymio, EVENTS } from './api.js';
-import { SPEED_LIMIT } from './theme.js';
+import { SPEED_LIMIT, isGreen } from './theme.js';
 import { DataLogger } from './logger.js';
 import { Trajectory } from './trajectory.js';
 
@@ -18,6 +18,7 @@ export default function App() {
     runLeftSpeed: 200, runRightSpeed: 200, runTenths: 30, runRemaining: 0,
     stopwatch: { running: false, ms: 0 },
     keys: {}, buttons: {}, manual: false,
+    stopGreen: false, greenTicks: 0, onGreen: false, blocked: false,
     ir: 0, irAt: 0,
   });
   const [, tick] = useState(0);
@@ -110,15 +111,32 @@ export default function App() {
         if (c.runRemaining === 0) { c.left = 0; c.right = 0; }
       }
 
-      if (live) {
-        link.current.send({ motorLeft: c.left, motorRight: c.right, leds: c.leds });
-      } else {
-        sim.current.step(0.04, { left: c.left, right: c.right });
-      }
-      // Log the raw telemetry (pre gyro-zero-offset) so an export reflects
-      // exactly what the sensors reported, not a display-only adjustment.
+      // Stop over green: green ground marks the edge of the arena. Needs two
+      // consecutive green samples (debounce). On arrival the commanded speeds
+      // and any timed run are cancelled; while on green, forward motion is
+      // filtered out of what is sent (reverse and spinning stay allowed so the
+      // robot can get away again).
       const tel = live ? link.current.tel : sim.current.tel;
-      logger.current.record(tel, c, live);
+      c.greenTicks = isGreen(tel.color) ? c.greenTicks + 1 : 0;
+      const onGreen = c.greenTicks >= 2;
+      if (c.stopGreen && onGreen && !c.onGreen) { c.left = 0; c.right = 0; c.runRemaining = 0; }
+      c.onGreen = onGreen;
+      let outL = c.left, outR = c.right;
+      c.blocked = false;
+      if (c.stopGreen && onGreen && (outL + outR) / 2 > 0) {
+        const spin = (outR - outL) / 2;
+        outL = -spin; outR = spin;
+        c.blocked = true;
+      }
+
+      if (live) {
+        link.current.send({ motorLeft: outL, motorRight: outR, leds: c.leds });
+      } else {
+        sim.current.step(0.04, { left: outL, right: outR });
+      }
+      // Log the raw telemetry (pre gyro-zero-offset) and the motor command
+      // actually sent, so an export reflects what really happened.
+      logger.current.record(tel, { left: outL, right: outR, leds: c.leds }, live);
       traj.current.update(tel, Date.now());
       sweep.current = (sweep.current + 0.11) % (Math.PI * 2);
       tick((n) => n + 1);

@@ -85,6 +85,15 @@ pointing up, RESET VIEW for pan/zoom/rotation, and INIT MAP to clear the trail a
 robot's current pose the origin. It is dead reckoning, so it drifts; distance uses
 `MM_PER_UNIT_S` in `src/trajectory.js` (approximate — calibrate it against a measured run).
 
+## Stop over green
+
+The STOP OVER GREEN toggle under the drive mix (TANDEM / SPIN / FREE) treats green ground as the
+edge of the arena. When the colour sensor reads green (two consecutive samples) the commanded
+speeds and any timed run are cancelled, and while the robot stays on green forward motion is
+filtered out of what is sent — reversing and spinning still work so it can leave. What counts
+as green is `GREEN` in `src/theme.js` (hue 75–170°, saturation ≥ 30, value ≥ 12); adjust it if
+the mission's green reads differently on the real sensor.
+
 ## Notes
 
 - The integrated gyro angle drifts; the panel says so and offers a zero.

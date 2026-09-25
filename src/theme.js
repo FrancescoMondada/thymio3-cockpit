@@ -77,5 +77,12 @@ export const COPY = {
   },
 };
 
+// "Green ground" test on the calibrated colour reading (hue in degrees,
+// saturation and value 0-100). Tune these if the mission's green reads
+// differently on the real sensor.
+export const GREEN = { hueMin: 75, hueMax: 170, minSat: 30, minVal: 12 };
+export const isGreen = (c) => Boolean(c)
+  && c.s >= GREEN.minSat && c.v >= GREEN.minVal && c.h >= GREEN.hueMin && c.h <= GREEN.hueMax;
+
 export const ledCss = (l) => `rgb(${Math.round((l.r / 15) * 255)},${Math.round((l.g / 15) * 255)},${Math.round((l.b / 15) * 255)})`;
 export const tone = (v) => (v > 2600 ? C.red : v > 1200 ? C.amber : C.phosphor);

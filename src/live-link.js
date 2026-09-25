@@ -110,9 +110,9 @@ export class LiveLink {
     // the same signal, which reads as oscillation. The main stream is the
     // one documented (README) as carrying ground-reflected data; leave it
     // as the single source.
-    // Firmware reports angleDegrees increasing clockwise; the cockpit uses
-    // the opposite (CCW-positive) convention, so negate it here — the one
-    // place both the ANGLE readout and the heading/compass derive from.
+    // The firmware angle grows counter-clockwise; the cockpit uses the
+    // compass convention (clockwise positive), so negate it here — the one
+    // place the ANGLE readout, the heading/compass and the map derive from.
     t.angle = -d.angleDegrees;
     t.fresh = true;
     t.heading = ((-d.angleDegrees % 360) + 360) % 360;

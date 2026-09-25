@@ -394,6 +394,17 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
                   style={{ ...btn, flex: 1, border: `2px solid ${c.mix === m ? C.phosphor : C.rule}`, background: c.mix === m ? 'rgba(125,250,168,.14)' : C.panelUp, color: c.mix === m ? C.phosphor : C.ink, padding: '7px 8px' }}>{m}</button>
               ))}
             </div>
+            <button type="button" title="Stop when the ground colour sensor sees green; only reverse and spinning stay allowed while on green"
+              onClick={() => set((cc) => { cc.stopGreen = !cc.stopGreen; })}
+              style={{ ...btn, display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: 7, padding: '7px 8px',
+                border: `2px solid ${c.stopGreen ? C.phosphor : C.rule}`, background: c.stopGreen ? 'rgba(125,250,168,.14)' : C.panelUp, color: c.stopGreen ? C.phosphor : C.ink }}>
+              <span>STOP OVER GREEN</span><span>{c.stopGreen ? 'ON' : 'OFF'}</span>
+            </button>
+            {c.stopGreen ? (
+              <div style={{ marginTop: 5, font: '600 9px/1.3 Archivo', letterSpacing: '.08em', color: c.onGreen ? C.amber : C.phosphorDim }}>
+                {c.onGreen ? (c.blocked ? 'GREEN GROUND · FORWARD BLOCKED' : 'GREEN GROUND · STOPPED') : 'ARMED · WATCHING FOR GREEN'}
+              </div>
+            ) : null}
             <div style={{ display: 'flex', gap: 10, marginTop: 9 }}>
               {[['LEFT', c.left], ['RIGHT', c.right]].map(([name, v]) => (
                 <div key={name} style={{ flex: 1, ...well, padding: '7px 9px 8px' }}>

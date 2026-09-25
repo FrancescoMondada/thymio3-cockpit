@@ -1,5 +1,5 @@
 // Dead-reckoned 2D trajectory. Heading comes from the gyro-integrated angle
-// (CCW positive), distance from the wheel-speed feedback. World frame is in
+// (compass style: increases when the robot turns right), distance from the wheel-speed feedback. World frame is in
 // millimetres with y up; the robot starts at the origin facing +y.
 //
 // Speed units -> mm/s is approximate (Thymio-class robots are ~0.4 mm/s per
@@ -32,7 +32,8 @@ export class Trajectory {
     const dt = this.lastTime === null ? 0 : Math.min(0.2, (now - this.lastTime) / 1000);
     this.lastTime = now;
 
-    this.th = ((tel.angle - this.angle0) * Math.PI) / 180;
+    // tel.angle grows clockwise; th is the usual maths angle (CCW positive).
+    this.th = ((this.angle0 - tel.angle) * Math.PI) / 180;
     const dist = ((tel.motor.left + tel.motor.right) / 2) * MM_PER_UNIT_S * dt;
     this.x += -Math.sin(this.th) * dist;
     this.y += Math.cos(this.th) * dist;
@@ -45,5 +46,6 @@ export class Trajectory {
     }
   }
 
-  get headingDeg() { return (((this.th * 180) / Math.PI) % 360 + 360) % 360; }
+  // Same compass convention as the ANGLE / HEADING gauges (clockwise positive).
+  get headingDeg() { return ((((-this.th * 180) / Math.PI) % 360) + 360) % 360; }
 }
