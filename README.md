@@ -78,7 +78,8 @@ inside the API's ±1000.
 ## Trajectory map
 
 The canopy shows a 2D map of where the robot has been, integrated from the gyro angle
-(heading) and the wheel-speed feedback (distance). Drag to pan, mouse wheel to zoom,
+(heading) and the wheel-speed feedback (distance). In COMBO the proximity beams are drawn on
+the robot itself. Drag to pan, mouse wheel to zoom,
 Shift/right-drag (or ⟲ ⟳) to rotate, FOLLOW to keep the robot centred, HDG UP to keep it
 pointing up, RESET VIEW for pan/zoom/rotation, and INIT MAP to clear the trail and make the
 robot's current pose the origin. It is dead reckoning, so it drifts; distance uses

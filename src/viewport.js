@@ -41,19 +41,7 @@ export function drawViewport(canvas, tel, { mode = 'COMBO', scanlines = true, sw
   if (mode === 'RADAR') {
     radar(g, tel, 0, 0, w, h, sweep, false);
   } else {
-    if (traj) mapView(g, traj, mv, w, h);
-    if (mode === 'COMBO') {
-      const s = 210;
-      g.save();
-      g.translate(w - s - 22, h - s - 22);
-      g.fillStyle = 'rgba(5,8,6,.88)';
-      g.fillRect(0, 0, s, s);
-      g.strokeStyle = '#23402f';
-      g.lineWidth = 2;
-      g.strokeRect(1, 1, s - 2, s - 2);
-      radar(g, tel, 0, 0, s, s, sweep, true);
-      g.restore();
-    }
+    if (traj) mapView(g, traj, mv, w, h, tel, mode === 'COMBO');
   }
 
   if (scanlines) {
@@ -69,7 +57,7 @@ export function drawViewport(canvas, tel, { mode = 'COMBO', scanlines = true, sw
   g.fillRect(0, 0, w, h);
 }
 
-function mapView(g, traj, mv, w, h) {
+function mapView(g, traj, mv, w, h, tel, sensors) {
   const T = mapTransform(mv, traj, w, h);
   const { z, toScreen } = T;
 
@@ -117,10 +105,12 @@ function mapView(g, traj, mv, w, h) {
   g.fillStyle = AM;
   g.fillText('START', ox + 10, oy - 8);
 
+  if (sensors) proxOnRobot(g, T, traj, tel);
+
   // Robot: footprint (11 cm) when zoomed in enough, plus a heading arrow.
   const fx = -Math.sin(traj.th), fy = Math.cos(traj.th);
   const sdx = fx * T.cosR - fy * T.sinR, sdy = -(fx * T.sinR + fy * T.cosR);
-  if (55 * z > 8) {
+  if (sensors || 55 * z > 8) {
     g.strokeStyle = 'rgba(125,250,168,.55)';
     g.lineWidth = 1.5;
     g.beginPath(); g.arc(rx, ry, 55 * z, 0, Math.PI * 2); g.stroke();
@@ -157,6 +147,44 @@ function mapView(g, traj, mv, w, h) {
   g.font = '700 10px Archivo';
   g.fillStyle = PD;
   g.fillText('0°', ax + 22, ay + 4);
+}
+
+// Proximity beams drawn on the robot itself, in world scale and rotating with
+// its heading. Angles are CCW from the heading; distance uses the same
+// approximate value->distance curve as the simulator (sensors sit ~55 mm from
+// the centre and see out to ~245 mm), so treat it as indicative, not metric.
+const PROX_BEAMS = [
+  ['left', 0.61], ['frontLeft', 0.31], ['center', 0], ['frontRight', -0.31], ['right', -0.61],
+  ['backLeft', Math.PI - 0.34], ['backRight', Math.PI + 0.34],
+];
+const R_BODY = 55, R_MAX = 245;
+
+function proxOnRobot(g, T, traj, tel) {
+  PROX_BEAMS.forEach(([key, phi]) => {
+    const v = tel.prox[key];
+    const a = Math.PI / 2 + traj.th + phi;
+    const at = (r, da = 0) => T.toScreen(traj.x + Math.cos(a + da) * r, traj.y + Math.sin(a + da) * r);
+
+    const [x0, y0] = at(R_BODY), [x1, y1] = at(R_MAX);
+    g.strokeStyle = 'rgba(125,250,168,.16)';
+    g.lineWidth = 1;
+    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+
+    if (v <= 0) return;
+    const n = Math.min(1, v / 4000);
+    const d = R_BODY + (R_MAX - R_BODY) * (1 - Math.pow(n, 2 / 3));
+    const col = tone(v);
+    g.fillStyle = col;
+    g.globalAlpha = 0.18 + n * 0.5;
+    g.beginPath();
+    for (let i = 0; i <= 6; i++) { const [sx, sy] = at(d, -0.13 + (0.26 * i) / 6); if (i) g.lineTo(sx, sy); else g.moveTo(sx, sy); }
+    for (let i = 6; i >= 0; i--) { const [sx, sy] = at(R_BODY, -0.13 + (0.26 * i) / 6); g.lineTo(sx, sy); }
+    g.closePath();
+    g.fill();
+    g.globalAlpha = 1;
+    const [px, py] = at(d);
+    g.beginPath(); g.arc(px, py, 3.5, 0, Math.PI * 2); g.fill();
+  });
 }
 
 function radar(g, tel, ox, oy, w, h, sweep, mini) {

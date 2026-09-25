@@ -283,7 +283,7 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '0 2px 10px' }}>
             <div style={{ ...label, letterSpacing: '.18em' }}>CANOPY</div>
             <div style={{ font: '800 12px/1 Archivo', letterSpacing: '.06em', color: C.phosphor }}>
-              {{ MAP: 'TRAJECTORY MAP', RADAR: 'PROXIMITY RADAR', COMBO: 'MAP + RADAR INSET' }[view]}
+              {{ MAP: 'TRAJECTORY MAP', RADAR: 'PROXIMITY RADAR', COMBO: 'MAP + SENSORS ON ROBOT' }[view]}
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
               {['MAP', 'RADAR', 'COMBO'].map((id) => (
