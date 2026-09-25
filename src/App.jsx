@@ -5,6 +5,7 @@ import { LiveLink } from './live-link.js';
 import { thymio, EVENTS } from './api.js';
 import { SPEED_LIMIT } from './theme.js';
 import { DataLogger } from './logger.js';
+import { Trajectory } from './trajectory.js';
 
 const clamp = (v) => Math.max(-SPEED_LIMIT, Math.min(SPEED_LIMIT, Math.round(v)));
 
@@ -24,6 +25,7 @@ export default function App() {
   const [live, setLive] = useState(false);
   const sweep = useRef(0);
   const logger = useRef(new DataLogger());
+  const traj = useRef(new Trajectory());
   // The firmware doesn't expose a "reset" for the integrated gyro angle, so
   // zeroing is a local display offset applied to the raw telemetry below.
   const [gyroZero, setGyroZero] = useState({ angle: 0, heading: 0 });
@@ -81,6 +83,9 @@ export default function App() {
 
   // --- main loop ----------------------------------------------------------
   useEffect(() => {
+    // Sim and live have unrelated coordinate origins, so start a fresh map
+    // whenever the source changes.
+    traj.current.reset();
     const id = setInterval(() => {
       const c = cmd.current;
       const k = c.keys, b = c.buttons;
@@ -112,7 +117,9 @@ export default function App() {
       }
       // Log the raw telemetry (pre gyro-zero-offset) so an export reflects
       // exactly what the sensors reported, not a display-only adjustment.
-      logger.current.record(live ? link.current.tel : sim.current.tel, c, live);
+      const tel = live ? link.current.tel : sim.current.tel;
+      logger.current.record(tel, c, live);
+      traj.current.update(tel, Date.now());
       sweep.current = (sweep.current + 0.11) % (Math.PI * 2);
       tick((n) => n + 1);
     }, 40);
@@ -135,6 +142,7 @@ export default function App() {
   }, []);
   const clearLog = useCallback(() => { logger.current.clear(); tick((n) => n + 1); }, []);
   const exportLog = useCallback(() => { logger.current.export(); }, []);
+  const initMap = useCallback(() => { traj.current.reset(); tick((n) => n + 1); }, []);
 
   return (
     <Cockpit
@@ -143,6 +151,7 @@ export default function App() {
       connection={conn}
       live={live}
       sweep={sweep.current}
+      traj={traj.current}
       logging={{ enabled: logger.current.enabled, rows: logger.current.rows.length, full: logger.current.full }}
       onConnect={connect}
       onDisconnect={disconnect}
@@ -150,6 +159,7 @@ export default function App() {
       onToggleLog={toggleLog}
       onClearLog={clearLog}
       onExportLog={exportLog}
+      onInitMap={initMap}
       onCommand={(mutate) => { mutate(cmd.current); tick((n) => n + 1); }}
     />
   );

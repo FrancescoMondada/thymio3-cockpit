@@ -42,6 +42,7 @@ export class LiveLink {
       motor: { left: 0, right: 0 },
       events: { tap: 0, clap: 0, freefall: 0 },
       heading: 0,
+      fresh: false,
     };
   }
 
@@ -113,6 +114,7 @@ export class LiveLink {
     // the opposite (CCW-positive) convention, so negate it here — the one
     // place both the ANGLE readout and the heading/compass derive from.
     t.angle = -d.angleDegrees;
+    t.fresh = true;
     t.heading = ((-d.angleDegrees % 360) + 360) % 360;
     t.motor = { left: d.motor.leftSpeed, right: d.motor.rightSpeed };
     t.battery = d.batteryVoltage / 1000;

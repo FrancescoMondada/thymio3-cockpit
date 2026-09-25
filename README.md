@@ -57,7 +57,8 @@ Bluetooth; the cockpit still runs in simulation there.
 | `src/api.js` | The only import of the Thymio API, plus the DOM event names |
 | `src/live-link.js` | Turns `thymio-sensor-values` / `thymio-sensor-other-values` into telemetry; sends a full actuator frame at ~10 Hz |
 | `src/robot-sim.js` | The simulated robot and room — same telemetry shape as the live link |
-| `src/viewport.js` | Canvas HUD and proximity radar |
+| `src/viewport.js` | Canvas trajectory map and proximity radar |
+| `src/trajectory.js` | Dead-reckoned position: gyro heading + wheel-speed feedback |
 | `src/cockpit.jsx` | The cockpit UI |
 | `src/App.jsx` | Connection state, the 25 Hz command loop, sim ↔ live switch |
 | `src/theme.js` | Colours, LED palette, speed presets, instrument copy |
@@ -73,6 +74,15 @@ Commands out: one `setActuatorState()` frame carrying `motorLeft`, `motorRight` 
 corner RGB LEDs (plus the fields the protocol requires). Speeds are **robot units**, no metric
 conversion — the cockpit is scaled for classroom use with FAST = 300 and a ±400 limit, well
 inside the API's ±1000.
+
+## Trajectory map
+
+The canopy shows a 2D map of where the robot has been, integrated from the gyro angle
+(heading) and the wheel-speed feedback (distance). Drag to pan, mouse wheel to zoom,
+Shift/right-drag (or ⟲ ⟳) to rotate, FOLLOW to keep the robot centred, HDG UP to keep it
+pointing up, RESET VIEW for pan/zoom/rotation, and INIT MAP to clear the trail and make the
+robot's current pose the origin. It is dead reckoning, so it drifts; distance uses
+`MM_PER_UNIT_S` in `src/trajectory.js` (approximate — calibrate it against a measured run).
 
 ## Notes
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { drawViewport } from './viewport.js';
+import { drawViewport, mapTransform, MAP_DEFAULT } from './viewport.js';
 import { C, COPY, HUES, SWATCHES, SPEEDS, PRESETS, SPEED_LIMIT, ledCss, tone } from './theme.js';
 import { thymio } from './api.js';
 
@@ -31,7 +31,7 @@ function Meter({ name, v }) {
   );
 }
 
-export default function Cockpit({ telemetry: t, command: c, connection, live, sweep, logging, onConnect, onDisconnect, onZeroGyro, onToggleLog, onClearLog, onExportLog, onCommand }) {
+export default function Cockpit({ telemetry: t, command: c, connection, live, sweep, traj, logging, onConnect, onDisconnect, onZeroGyro, onToggleLog, onClearLog, onExportLog, onInitMap, onCommand }) {
   const [kid, setKid] = useState(true);
   const [view, setView] = useState('COMBO');
   const [drawer, setDrawer] = useState(false);
@@ -40,7 +40,67 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
   const pad = useRef(null);
   const copy = kid ? COPY.kid : COPY.expert;
 
-  useEffect(() => { if (canvas.current) drawViewport(canvas.current, t, { mode: view, sweep }); });
+  // Map view (pan / zoom / rotate). Kept in a ref as well as state so the
+  // pointer and wheel handlers always work from the latest value.
+  const [mv, setMv] = useState(MAP_DEFAULT);
+  const mvRef = useRef(mv);
+  const updateMv = (patch) => {
+    mvRef.current = { ...mvRef.current, ...(typeof patch === 'function' ? patch(mvRef.current) : patch) };
+    setMv(mvRef.current);
+  };
+  const clampZoom = (z) => Math.max(0.02, Math.min(6, z));
+  const drag = useRef(null);
+
+  useEffect(() => { if (canvas.current) drawViewport(canvas.current, t, { mode: view, sweep, traj, mv }); });
+
+  useEffect(() => {
+    const el = canvas.current;
+    if (!el || view === 'RADAR') return undefined;
+    const onWheel = (e) => {
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      const sx = e.clientX - r.left, sy = e.clientY - r.top;
+      const m = mvRef.current;
+      const zoom = clampZoom(m.zoom * Math.exp(-e.deltaY * 0.0015));
+      if (m.follow) { updateMv({ zoom }); return; }
+      // Not following: zoom about the cursor so the point under it stays put.
+      const [px, py] = mapTransform(m, traj, el.clientWidth, el.clientHeight).fromScreen(sx, sy);
+      const [qx, qy] = mapTransform({ ...m, zoom }, traj, el.clientWidth, el.clientHeight).fromScreen(sx, sy);
+      updateMv({ zoom, cx: m.cx + (px - qx), cy: m.cy + (py - qy) });
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [view, traj]);
+
+  const angleAt = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    return Math.atan2(-(e.clientY - r.top - r.height / 2), e.clientX - r.left - r.width / 2);
+  };
+  const mapDown = (e) => {
+    if (view === 'RADAR') return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    drag.current = { x: e.clientX, y: e.clientY, rotate: e.shiftKey || e.button === 2, ang: angleAt(e) };
+  };
+  const mapMove = (e) => {
+    const d = drag.current;
+    if (!d) return;
+    if (d.rotate) {
+      const ang = angleAt(e);
+      const delta = ((ang - d.ang) * 180) / Math.PI;
+      d.ang = ang;
+      updateMv((m) => ({ rot: m.rot + delta }));
+    } else {
+      const el = e.currentTarget;
+      const T = mapTransform(mvRef.current, traj, el.clientWidth, el.clientHeight);
+      const u = (e.clientX - d.x) / T.z, v = -(e.clientY - d.y) / T.z;
+      d.x = e.clientX; d.y = e.clientY;
+      updateMv({ follow: false, cx: T.cx - (u * T.cosR + v * T.sinR), cy: T.cy - (-u * T.sinR + v * T.cosR) });
+    }
+  };
+  const mapUp = () => { drag.current = null; };
+  const mapBtn = (on) => ({ ...btn, padding: '5px 7px', font: '700 9px/1 Archivo', textAlign: 'center',
+    background: on ? 'rgba(125,250,168,.18)' : 'rgba(5,8,6,.85)', color: on ? C.phosphor : C.ink,
+    border: `2px solid ${on ? C.phosphor : C.rule}` });
 
   // Recording and playback both happen on the robot itself (its mic, its
   // speaker) — the API only tells us the write succeeded, not when the
@@ -223,10 +283,10 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '0 2px 10px' }}>
             <div style={{ ...label, letterSpacing: '.18em' }}>CANOPY</div>
             <div style={{ font: '800 12px/1 Archivo', letterSpacing: '.06em', color: C.phosphor }}>
-              {{ HUD: 'FIRST-PERSON HUD', RADAR: 'PROXIMITY RADAR', COMBO: 'HUD + RADAR INSET' }[view]}
+              {{ MAP: 'TRAJECTORY MAP', RADAR: 'PROXIMITY RADAR', COMBO: 'MAP + RADAR INSET' }[view]}
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
-              {['HUD', 'RADAR', 'COMBO'].map((id) => (
+              {['MAP', 'RADAR', 'COMBO'].map((id) => (
                 <button key={id} type="button" onClick={() => setView(id)}
                   style={{ ...btn, background: view === id ? 'rgba(125,250,168,.16)' : '#0e1311', color: view === id ? C.phosphor : C.phosphorDim, padding: '7px 12px' }}>{id}</button>
               ))}
@@ -241,11 +301,35 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
             <div style={{ position: 'absolute', left: 16, top: 9, display: 'flex', gap: 8 }}><Bolt /><Bolt /></div>
             <div style={{ position: 'absolute', right: 16, top: 9, display: 'flex', gap: 8 }}><Bolt /><Bolt /></div>
             <div style={{ position: 'absolute', inset: 14, border: '2px solid #050806', background: '#050706', boxShadow: 'inset 0 0 0 3px #111814' }}>
-              <canvas ref={canvas} style={{ position: 'absolute', inset: 0, display: 'block', width: '100%', height: '100%' }} />
+              <canvas ref={canvas}
+                onPointerDown={mapDown} onPointerMove={mapMove} onPointerUp={mapUp} onPointerCancel={mapUp}
+                onContextMenu={(e) => e.preventDefault()}
+                style={{ position: 'absolute', inset: 0, display: 'block', width: '100%', height: '100%', touchAction: 'none', cursor: view === 'RADAR' ? 'default' : 'grab' }} />
               <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(112deg,rgba(255,255,255,.055) 0 24%,rgba(255,255,255,0) 26%,rgba(255,255,255,0) 68%,rgba(255,255,255,.03) 70% 100%)' }} />
-              <div style={{ position: 'absolute', left: 14, top: 52, font: '600 10px/1.6 Archivo', letterSpacing: '.1em', color: '#4f7f62' }}>
-                POV · SENSOR RECONSTRUCTION<br />RAW SENSOR UNITS 0 – 4000
+              <div style={{ position: 'absolute', left: 14, top: view === 'RADAR' ? 52 : 66, pointerEvents: 'none', font: '600 10px/1.6 Archivo', letterSpacing: '.1em', color: '#4f7f62' }}>
+                {view === 'RADAR' ? <>PROXIMITY RADAR<br />RAW SENSOR UNITS 0 – 4000</> : <>
+                  DEAD RECKONING · GYRO HEADING + WHEEL SPEED<br />
+                  X {Math.round(traj.x)} · Y {Math.round(traj.y)} mm · HDG {traj.headingDeg.toFixed(0)}°<br />
+                  PATH {(traj.length / 1000).toFixed(2)} m<br />
+                  DRAG PAN · WHEEL ZOOM · SHIFT/RIGHT-DRAG ROTATE
+                </>}
               </div>
+              {view !== 'RADAR' ? (
+                <div style={{ position: 'absolute', right: 10, top: 10, display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: 420 }}>
+                  <button type="button" title="Zoom in" onClick={() => updateMv((m) => ({ zoom: clampZoom(m.zoom * 1.4) }))} style={mapBtn(false)}>＋</button>
+                  <button type="button" title="Zoom out" onClick={() => updateMv((m) => ({ zoom: clampZoom(m.zoom / 1.4) }))} style={mapBtn(false)}>－</button>
+                  <button type="button" title="Rotate map counter-clockwise" onClick={() => updateMv((m) => ({ rot: m.rot + 15 }))} style={mapBtn(false)}>⟲</button>
+                  <button type="button" title="Rotate map clockwise" onClick={() => updateMv((m) => ({ rot: m.rot - 15 }))} style={mapBtn(false)}>⟳</button>
+                  <button type="button" title="Keep the robot centred"
+                    onClick={() => updateMv((m) => (m.follow ? { follow: false, cx: traj.x, cy: traj.y } : { follow: true }))}
+                    style={mapBtn(mv.follow)}>FOLLOW</button>
+                  <button type="button" title="Rotate the map so the robot always points up"
+                    onClick={() => updateMv((m) => ({ headingUp: !m.headingUp }))} style={mapBtn(mv.headingUp)}>HDG UP</button>
+                  <button type="button" title="Reset pan, zoom and rotation" onClick={() => updateMv(MAP_DEFAULT)} style={mapBtn(false)}>RESET VIEW</button>
+                  <button type="button" title="Clear the trajectory; the robot's current pose becomes the origin"
+                    onClick={() => { onInitMap(); updateMv(MAP_DEFAULT); }} style={mapBtn(false)}>INIT MAP</button>
+                </div>
+              ) : null}
             </div>
           </div>
           {/* glare shield */}
