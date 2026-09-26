@@ -419,7 +419,7 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
 
             <div style={{ marginTop: 9, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
               {SPEEDS.map((s) => (
-                <button key={s.label} type="button" onClick={() => (s.spin ? motors(-s.spin, s.spin) : motors(s.v, s.v))}
+                <button key={s.label} type="button" onClick={() => (s.spin ? motors(s.spin, -s.spin) : motors(s.v, s.v))}
                   style={{ ...btn, font: '700 10px/1.15 Archivo', padding: '7px 8px' }}>
                   {s.label}<br /><span style={{ color: C.phosphorDim, fontWeight: 500 }}>{s.spin ? `${s.spin} / ${-s.spin}` : `${s.v} both`}</span>
                 </button>
