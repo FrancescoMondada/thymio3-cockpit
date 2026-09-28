@@ -9,10 +9,17 @@ LEDs on the consoles.
 It runs with **no robot attached** — a simulated Thymio drives around a room with obstacles,
 black lines and colour pads — and switches to live telemetry the moment a real robot connects.
 
-**Live demo:** https://francescomondada.github.io/thymio3-cockpit/ (simulation works everywhere;
-connecting a real robot needs Web Bluetooth — see below).
+## Try it now
 
-## Run it
+**https://francescomondada.github.io/thymio3-cockpit/**
+
+No install, no build — just open the link. Simulation works in any browser. To fly a real
+Thymio 3 from it, use Chrome or Edge (Web Bluetooth isn't implemented in Firefox or Safari,
+which stay in simulation) and click CONNECT ROBOT.
+
+## Run it locally
+
+Only needed for development — the live demo above always tracks `main`.
 
 ```bash
 git clone <this-repo>
@@ -22,10 +29,6 @@ npm run dev
 ```
 
 Then open the printed `http://localhost:5173`.
-
-**Connecting to a real robot** needs Web Bluetooth: Chrome or Edge, over `https://` or
-`localhost`, and a user click on CONNECT ROBOT. Firefox and Safari do not implement Web
-Bluetooth; the cockpit still runs in simulation there.
 
 ## Cockpit layout
 
