@@ -43,7 +43,18 @@ export default function App() {
         setConn({ status: 'connected', device: thymio.getDeviceName?.() || 'THYMIO 3', firmware, error: '', reconnect: false });
         setLive(true);
       } else {
-        setConn((c) => ({ ...c, status: 'connecting', device: '', firmware: null }));
+        // The API dispatches this same "false" event for three different
+        // cases: an initial connect attempt failing, a mid-session drop
+        // (which it retries internally for a while), and disconnect().
+        // We used to set status to 'connecting' here, which left CONNECT
+        // ROBOT permanently disabled whenever a connect attempt simply
+        // failed (e.g. right after a reload, before the robot's old link
+        // has timed out) — nothing ever moved it out of that state. Go
+        // back to a clickable 'disconnected' instead; the API's own retry
+        // loop keeps running in the background regardless of what the
+        // button shows.
+        setConn((c) => ({ ...c, status: 'disconnected', device: '', firmware: null }));
+        setLive(false);
       }
     };
     const onManual = () => setConn({ status: 'disconnected', device: '', firmware: null, error: '', reconnect: true });
