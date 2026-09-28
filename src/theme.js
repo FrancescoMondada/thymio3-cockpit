@@ -40,7 +40,7 @@ export const SPEEDS = [
 export const PRESETS = [
   { id: 'all-off', label: 'All Off', desc: 'Zero LEDs, stop motors', ml: 0, mr: 0, led: { r: 0, g: 0, b: 0 }, sw: '#1a2420' },
   { id: 'headlights', label: 'Headlights', desc: 'Front pair bright white', ml: 0, mr: 0, front: { r: 15, g: 15, b: 15 }, rear: { r: 0, g: 0, b: 0 }, sw: '#ffffff' },
-  { id: 'brake', label: 'Brake Lights', desc: 'Rear pair red, motors stopped', ml: 0, mr: 0, front: { r: 0, g: 0, b: 0 }, rear: { r: 15, g: 0, b: 0 }, sw: '#ff2a10' },
+  { id: 'stop', label: 'Stop', desc: 'Motors stopped, LEDs left as they are', ml: 0, mr: 0, sw: '#ff2a10' },
   { id: 'spin', label: 'Spin In Place', desc: 'Motors opposite, blue corners', ml: 150, mr: -150, led: { r: 0, g: 0, b: 15 }, sw: '#2a49ff' },
   { id: 'forward', label: 'Cruise Forward', desc: 'Both motors +200', ml: 200, mr: 200, led: { r: 4, g: 12, b: 4 }, sw: '#4fd07a' },
   { id: 'alert', label: 'Alert', desc: 'All LEDs high', ml: 0, mr: 0, led: { r: 15, g: 0, b: 0 }, sw: '#ff563c' },
