@@ -50,9 +50,21 @@ export default function App() {
 
     document.addEventListener(EVENTS.connected, onConnected);
     document.addEventListener(EVENTS.manualReconnect, onManual);
+
+    // Reloading or closing the tab while connected leaves the robot's side
+    // of the BLE link waiting out its supervision timeout (several seconds,
+    // firmware-dependent) before it treats itself as free again — the next
+    // CONNECT ROBOT during that window fails. Tear the link down as the page
+    // goes away so the robot notices immediately instead of timing out.
+    const onUnload = () => { if (thymio.isConnected()) thymio.disconnect().catch(() => {}); };
+    window.addEventListener('pagehide', onUnload);
+    window.addEventListener('beforeunload', onUnload);
+
     return () => {
       document.removeEventListener(EVENTS.connected, onConnected);
       document.removeEventListener(EVENTS.manualReconnect, onManual);
+      window.removeEventListener('pagehide', onUnload);
+      window.removeEventListener('beforeunload', onUnload);
       link.current.detach();
     };
   }, []);
