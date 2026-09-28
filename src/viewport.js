@@ -1,5 +1,8 @@
 // Canvas viewport: trajectory map + proximity radar, drawn from telemetry.
-const P = '#7dfaa8', PD = '#3f6b52', AM = '#ffc24a', RD = '#ff563c';
+// These default to the Phosphor palette but are updated at the top of
+// drawViewport() from the active theme, so canvas drawing reskins too —
+// same trick as theme.js's mutable C object, one binding read everywhere.
+let P = '#7dfaa8', PD = '#3f6b52', AM = '#ffc24a', RD = '#ff563c';
 const tone = (v) => (v > 2600 ? RD : v > 1200 ? AM : P);
 
 // Map view state (owned by the cockpit): pan centre (mm), zoom (px per mm),
@@ -26,7 +29,8 @@ export function mapTransform(mv, traj, w, h) {
 
 const NICE = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
 
-export function drawViewport(canvas, tel, { mode = 'COMBO', scanlines = true, sweep = 0, traj, mv = MAP_DEFAULT }) {
+export function drawViewport(canvas, tel, { mode = 'COMBO', scanlines = true, sweep = 0, traj, mv = MAP_DEFAULT, theme }) {
+  if (theme) { P = theme.phosphor; PD = theme.phosphorDeep; AM = theme.amber; RD = theme.red; }
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const w = canvas.clientWidth, h = canvas.clientHeight;
   if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
