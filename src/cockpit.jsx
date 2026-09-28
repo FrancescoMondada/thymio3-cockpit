@@ -379,8 +379,8 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
             <div ref={pad}
               onPointerDown={(e) => { dragging.current = true; const p = padPoint(e); if (p) yokeTo(p[0], p[1]); }}
               onPointerMove={(e) => { if (!dragging.current) return; const p = padPoint(e); if (p) yokeTo(p[0], p[1]); }}
-              onPointerUp={() => { dragging.current = false; yokeTo(0, 0); }}
-              onPointerLeave={() => { dragging.current = false; yokeTo(0, 0); }}
+              onPointerUp={() => { if (dragging.current) { dragging.current = false; yokeTo(0, 0); } }}
+              onPointerLeave={() => { if (dragging.current) { dragging.current = false; yokeTo(0, 0); } }}
               style={{ marginTop: 10, position: 'relative', height: 118, ...well, cursor: 'crosshair', touchAction: 'none' }}>
               <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, background: C.ruleSoft }} />
               <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 1, background: C.ruleSoft }} />
