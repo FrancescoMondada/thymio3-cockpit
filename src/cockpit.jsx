@@ -110,7 +110,7 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
   };
   const mapUp = () => { drag.current = null; };
   const mapBtn = (on) => ({ ...btn(), padding: '5px 7px', font: '700 9px/1 Archivo', textAlign: 'center',
-    background: on ? `rgba(${C.glow},.18)` : 'rgba(5,8,6,.85)', color: on ? C.phosphor : C.ink,
+    background: on ? `rgba(${C.glow},.18)` : C.panelUp, color: on ? C.phosphor : C.ink,
     border: `2px solid ${on ? C.phosphor : C.rule}` });
 
   // Recording and playback both happen on the robot itself (its mic, its
