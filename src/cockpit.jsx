@@ -242,7 +242,7 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px 0' }}><Bolt /><Bolt /></div>
           <section style={{ padding: '8px 16px 16px', borderBottom: `2px solid ${C.rule}` }}>
             <H sub="0 – 4000">{copy.proxTitle}</H>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6, marginTop: 12, alignItems: 'end' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6, marginTop: 12, alignItems: 'start' }}>
               <Meter name={ui.axisLeft} v={t.prox.left} />
               <Meter name={ui.axisFrontLeft} v={t.prox.frontLeft} />
               <Meter name={ui.axisCenter} v={t.prox.center} />
@@ -252,7 +252,7 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
           </section>
           <section style={{ padding: '15px 16px 17px', borderBottom: `2px solid ${C.rule}` }}>
             <H sub="0 – 4000">{copy.proxBackTitle}</H>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6, marginTop: 11, alignItems: 'end' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6, marginTop: 11, alignItems: 'start' }}>
               <div />
               <Meter name={ui.axisLeft} v={t.prox.backLeft} />
               <div />
