@@ -210,7 +210,7 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
               <div style={{ marginTop: 4, font: '800 13px/1 Archivo', color: alarmInk }}>{alarm}</div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', padding: '0 14px', borderRight: `2px solid ${C.rule}`, background: 'repeating-linear-gradient(45deg,#2a1410 0 7px,#140806 7px 14px)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '0 14px', borderRight: `2px solid ${C.rule}`, background: `repeating-linear-gradient(45deg,${C.redDeep} 0 7px,${C.bg0} 7px 14px)` }}>
             <button type="button" onClick={() => set((cc) => { cc.left = 0; cc.right = 0; cc.runRemaining = 0; cc.yoke = { x: 0, y: 0 }; cc.leds = [0, 1, 2, 3].map(() => ({ r: 0, g: 0, b: 0 })); })}
               style={{ ...btn(), border: `2px solid ${C.redDeep}`, background: C.red, color: '#1a0603', font: '800 14px/1 Archivo', padding: '13px 22px', boxShadow: `0 3px 0 ${C.redDeep}` }}>{ui.allStop}</button>
           </div>
