@@ -31,7 +31,9 @@ const PALETTES = {
   daylight: {
     phosphor: '#0e7c74', phosphorDim: '#4b8f89', phosphorDeep: '#0a5951', glow: '14,124,116',
     ink: '#132420', onAccent: '#ffffff',
-    amber: '#ffc24a', amberDeep: '#6b4a12', amberGlow: '255,194,74',
+    // Pale gold reads fine on a dark background but is too close to white
+    // to use as text on this one — same amber family, darkened for contrast.
+    amber: '#8a5a00', amberDeep: '#6b4a12', amberGlow: '255,194,74',
     red: '#ff563c', redDeep: '#7c1405', redGlow: '255,86,60',
     bg0: '#e6edea', bg1: '#eef3f1', bg2: '#f6f9f8', bg3: '#ffffff',
     panel: '#ffffff', panelUp: '#f2f7f5', rule: '#c3d2cd', ruleSoft: '#d3e0db',
