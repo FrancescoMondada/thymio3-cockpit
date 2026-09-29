@@ -34,11 +34,9 @@ Then open the printed `http://localhost:5173`.
 
 The instrument panel is fixed for a wide desktop (≥1560 px), laid out around a central canopy
 with a sensor console on the left, a drive console on the right, and an auxiliary rack that
-slides in from the right (SHOW AUX / HIDE AUX, hidden by default). Every panel has two copy
-sets, switched with the EXPERT ▸ / ◂ SIMPLE button top-right: SIMPLE ("WHAT IS IN FRONT OF ME",
-"DRIVE MY WHEELS", …) for a classroom-friendly read, EXPERT ("PROXIMITY ARRAY · FRONT",
-"DIFFERENTIAL DRIVE", …) for the underlying signal names. Only the copy changes — every control
-behaves identically in both modes.
+slides in from the right (SHOW AUX / HIDE AUX, hidden by default). Section titles use a
+classroom-friendly read throughout ("WHAT IS IN FRONT OF ME", "DRIVE MY WHEELS", …) rather than
+the underlying signal names.
 
 The top-right corner also has a **THEME** switcher (3 colour dots) and a **LANG** switcher
 (EN/FR/IT/DE), both persisted in `localStorage` so they survive a reload. Three themes, chosen to
@@ -49,8 +47,8 @@ background, dark ink text, a teal accent, no scanlines. Every background gradien
 (and the canvas map/radar) is one of four theme-defined tokens, so the change is coherent across
 the whole instrument panel, not just text and borders. Warning/danger colours (amber/red) stay
 fixed across all three so alerts remain legible whichever is picked. See `THEME_IDS`/`applyTheme`
-in `src/theme.js`. Languages translate every panel — the SIMPLE/EXPERT
-copy above, plus every button, status and hint in the UI — via `src/i18n.js`; TANDEM/SPIN/FREE
+in `src/theme.js`. Languages translate every panel — the section copy above, plus every button,
+status and hint in the UI — via `src/i18n.js`; TANDEM/SPIN/FREE
 (drive-mix names) and the theme names are kept untranslated as short technical/stylistic labels,
 and the data log's CSV column headers always stay in English (it's a data-interchange format,
 not UI chrome).

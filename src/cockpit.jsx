@@ -37,7 +37,6 @@ function Meter({ name, v }) {
 }
 
 export default function Cockpit({ telemetry: t, command: c, connection, live, sweep, traj, logging, onConnect, onDisconnect, onZeroGyro, onToggleLog, onClearLog, onExportLog, onInitMap, onCommand }) {
-  const [kid, setKid] = useState(true);
   const [view, setView] = useState('COMBO');
   const [drawer, setDrawer] = useState(false);
   const [ear, setEar] = useState({ status: 'idle', error: '', remaining: 0 });
@@ -47,7 +46,7 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
   const pad = useRef(null);
   const L = I18N[lang] || I18N.en;
   const ui = L.ui, fmt = L.fmt;
-  const copy = kid ? L.copy.kid : L.copy.expert;
+  const copy = L.copy.kid;
 
   useEffect(() => { applyTheme(themeId); try { localStorage.setItem('cockpit-theme', themeId); } catch { /* ignore */ } }, [themeId]);
   useEffect(() => { try { localStorage.setItem('cockpit-lang', lang); } catch { /* ignore */ } }, [lang]);
@@ -215,7 +214,6 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
             <button type="button" onClick={() => set((cc) => { cc.left = 0; cc.right = 0; cc.runRemaining = 0; cc.yoke = { x: 0, y: 0 }; cc.leds = [0, 1, 2, 3].map(() => ({ r: 0, g: 0, b: 0 })); })}
               style={{ ...btn(), border: `2px solid ${C.redDeep}`, background: C.red, color: '#1a0603', font: '800 14px/1 Archivo', padding: '13px 22px', boxShadow: `0 3px 0 ${C.redDeep}` }}>{ui.allStop}</button>
           </div>
-          <button type="button" onClick={() => setKid((k) => !k)} style={{ ...btn(), border: 0, background: C.bg1, color: C.phosphor, width: 104, borderRadius: 0 }}>{kid ? ui.toExpert : ui.toSimple}</button>
           <button type="button" onClick={() => setDrawer((d) => !d)} style={{ ...btn(), border: 0, background: C.bg1, color: C.phosphor, width: 118, borderRadius: 0 }}>{drawer ? ui.hideAux : ui.showAux}</button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0 12px', borderLeft: `2px solid ${C.rule}` }}>
             <span style={{ ...label(), marginRight: 1 }}>{ui.themeLabel}</span>
@@ -440,7 +438,7 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                     <span style={label()}>{name}</span><span style={{ font: '800 15px/1 Archivo', color: C.phosphor }}>{v}</span>
                   </div>
-                  <input type="range" min={-SPEED_LIMIT} max={SPEED_LIMIT} step={20} value={v} style={{ width: '100%', marginTop: 5 }}
+                  <input type="range" min={-SPEED_LIMIT} max={SPEED_LIMIT} step={20} value={v} style={{ width: '100%', marginTop: 5, accentColor: C.phosphorDeep }}
                     onChange={(e) => { const n = +e.target.value; key === 'left' ? motors(n, c.right) : motors(c.left, n); }} />
                 </div>
               ))}
@@ -487,7 +485,7 @@ export default function Cockpit({ telemetry: t, command: c, connection, live, sw
                         {key === 'runTenths' ? fmt.execTime(v, seconds) : v}
                       </span>
                     </div>
-                    <input type="range" min={min} max={max} step={step} value={v} style={{ display: 'block', width: '100%', marginTop: 4 }}
+                    <input type="range" min={min} max={max} step={step} value={v} style={{ display: 'block', width: '100%', marginTop: 4, accentColor: C.phosphorDeep }}
                       onChange={(e) => set((cc) => { cc[key] = +e.target.value; })} />
                   </div>
                 ))}
