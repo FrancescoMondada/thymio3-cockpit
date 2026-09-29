@@ -3,6 +3,8 @@
 // drawViewport() from the active theme, so canvas drawing reskins too —
 // same trick as theme.js's mutable C object, one binding read everywhere.
 let P = '#7dfaa8', PD = '#3f6b52', AM = '#ffc24a', RD = '#ff563c';
+let CANVAS_BG = '#050806', SCANLINE = '#0d1f14', VIGNETTE = 'rgba(0,0,0,.5)';
+let RULE = '#23402f', RULE_SOFT = '#142219';
 const tone = (v) => (v > 2600 ? RD : v > 1200 ? AM : P);
 
 // Map view state (owned by the cockpit): pan centre (mm), zoom (px per mm),
@@ -30,7 +32,11 @@ export function mapTransform(mv, traj, w, h) {
 const NICE = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
 
 export function drawViewport(canvas, tel, { mode = 'COMBO', scanlines = true, sweep = 0, traj, mv = MAP_DEFAULT, theme }) {
-  if (theme) { P = theme.phosphor; PD = theme.phosphorDeep; AM = theme.amber; RD = theme.red; }
+  if (theme) {
+    P = theme.phosphor; PD = theme.phosphorDeep; AM = theme.amber; RD = theme.red;
+    CANVAS_BG = theme.canvasBg; SCANLINE = theme.scanlineColor; VIGNETTE = theme.vignette;
+    RULE = theme.rule; RULE_SOFT = theme.ruleSoft;
+  }
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const w = canvas.clientWidth, h = canvas.clientHeight;
   if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
@@ -39,7 +45,7 @@ export function drawViewport(canvas, tel, { mode = 'COMBO', scanlines = true, sw
   }
   const g = canvas.getContext('2d');
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  g.fillStyle = '#050806';
+  g.fillStyle = CANVAS_BG;
   g.fillRect(0, 0, w, h);
 
   if (mode === 'RADAR') {
@@ -50,13 +56,13 @@ export function drawViewport(canvas, tel, { mode = 'COMBO', scanlines = true, sw
 
   if (scanlines) {
     g.globalAlpha = 0.16;
-    g.fillStyle = '#0d1f14';
+    g.fillStyle = SCANLINE;
     for (let y = 0; y < h; y += 4) g.fillRect(0, y, w, 1);
     g.globalAlpha = 1;
   }
   const vig = g.createRadialGradient(w / 2, h / 2, h * 0.25, w / 2, h / 2, h * 0.85);
   vig.addColorStop(0, 'rgba(0,0,0,0)');
-  vig.addColorStop(1, 'rgba(0,0,0,.5)');
+  vig.addColorStop(1, VIGNETTE);
   g.fillStyle = vig;
   g.fillRect(0, 0, w, h);
 }
@@ -76,14 +82,14 @@ function mapView(g, traj, mv, w, h, tel, sensors) {
   };
   g.lineWidth = 1;
   for (let k = Math.ceil(minX / step); k <= Math.floor(maxX / step); k++) {
-    g.strokeStyle = k % 5 === 0 ? '#23402f' : '#142219';
+    g.strokeStyle = k % 5 === 0 ? RULE : RULE_SOFT;
     g.beginPath(); line(k * step, minY, k * step, maxY); g.stroke();
   }
   for (let k = Math.ceil(minY / step); k <= Math.floor(maxY / step); k++) {
-    g.strokeStyle = k % 5 === 0 ? '#23402f' : '#142219';
+    g.strokeStyle = k % 5 === 0 ? RULE : RULE_SOFT;
     g.beginPath(); line(minX, k * step, maxX, k * step); g.stroke();
   }
-  g.strokeStyle = '#3f6b52';
+  g.strokeStyle = PD;
   g.lineWidth = 1.5;
   g.beginPath(); line(0, minY, 0, maxY); line(minX, 0, maxX, 0); g.stroke();
 
@@ -140,7 +146,7 @@ function mapView(g, traj, mv, w, h, tel, sensors) {
 
   // Orientation marker: which way the initial heading (0°) points on screen.
   const ax = 34, ay = 34;
-  g.strokeStyle = '#23402f';
+  g.strokeStyle = RULE;
   g.lineWidth = 2;
   g.beginPath(); g.arc(ax, ay, 16, 0, Math.PI * 2); g.stroke();
   const tx = ax - 16 * T.sinR, ty = ay - 16 * T.cosR;
@@ -193,7 +199,7 @@ function proxOnRobot(g, T, traj, tel) {
 
 function radar(g, tel, ox, oy, w, h, sweep, mini) {
   const cx = ox + w / 2, cy = oy + h / 2 + (mini ? 0 : 10), R = Math.min(w, h) * 0.4;
-  g.strokeStyle = '#23402f';
+  g.strokeStyle = RULE;
   g.lineWidth = mini ? 1 : 2;
   for (let i = 1; i <= 4; i++) { g.beginPath(); g.arc(cx, cy, (R * i) / 4, 0, Math.PI * 2); g.stroke(); }
   g.beginPath();

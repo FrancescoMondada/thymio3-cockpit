@@ -40,13 +40,16 @@ sets, switched with the EXPERT ▸ / ◂ SIMPLE button top-right: SIMPLE ("WHAT 
 "DIFFERENTIAL DRIVE", …) for the underlying signal names. Only the copy changes — every control
 behaves identically in both modes.
 
-The top-right corner also has a **THEME** switcher (4 colour dots) and a **LANG** switcher
-(EN/FR/IT/DE), both persisted in `localStorage` so they survive a reload. Themes swap the accent
-colour used for text, borders, meters and glows — Phosphor (green, default), Slate (blue), Amber
-(warm gold) and Violet — plus a scanline effect on/off; warning/danger colours (amber/red) stay
-fixed across themes so alerts remain legible whichever one is picked. The two retro-styled themes
-(Phosphor, Amber) keep the CRT scanline effect, the two flatter ones (Slate, Violet) turn it off.
-See `THEME_IDS`/`applyTheme` in `src/theme.js`. Languages translate every panel — the SIMPLE/EXPERT
+The top-right corner also has a **THEME** switcher (3 colour dots) and a **LANG** switcher
+(EN/FR/IT/DE), both persisted in `localStorage` so they survive a reload. Three themes, chosen to
+look genuinely different from each other rather than one accent hue-shifted three ways: **Phosphor**
+(default) is a cool dark green CRT terminal with scanlines; **Ember** is a warm dark cockpit —
+brown/black background, amber accent, scanlines; **Daylight** is a light console — off-white
+background, dark ink text, a teal accent, no scanlines. Every background gradient in the cockpit
+(and the canvas map/radar) is one of four theme-defined tokens, so the change is coherent across
+the whole instrument panel, not just text and borders. Warning/danger colours (amber/red) stay
+fixed across all three so alerts remain legible whichever is picked. See `THEME_IDS`/`applyTheme`
+in `src/theme.js`. Languages translate every panel — the SIMPLE/EXPERT
 copy above, plus every button, status and hint in the UI — via `src/i18n.js`; TANDEM/SPIN/FREE
 (drive-mix names) and the theme names are kept untranslated as short technical/stylistic labels,
 and the data log's CSV column headers always stay in English (it's a data-interchange format,
